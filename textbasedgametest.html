@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dungeon Explorer</title>
+  <style>
+    body {
+      background-color: #1b1b1b;
+      color: #f0f0f0;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #game-container {
+      background-color: #2c2c2c;
+      padding: 30px;
+      border-radius: 15px;
+      width: 550px;
+      text-align: center;
+      box-shadow: 0 0 20px #000;
+    }
+    button {
+      background-color: #444;
+      color: #f0f0f0;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #666;
+    }
+    #map {
+      margin: 20px 0;
+      font-size: 14px;
+      color: #aaa;
+      white-space: pre;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <h1>Dungeon Explorer</h1>
+    <div id="story">You are a brave adventurer entering a dark dungeon...</div>
+    <div id="choices"></div>
+    <div id="map"></div>
+  </div>
+
+  <script>
+    const storyEl = document.getElementById('story');
+    const choicesEl = document.getElementById('choices');
+    const mapEl = document.getElementById('map');
+
+    const mapSize = 5;
+    let map = [];
+    let playerPos = {x: 2, y: 2}; // Start in the center
+    let pathTrail = [];
+
+    function initMap() {
+      map = [];
+      for(let y = 0; y < mapSize; y++){
+        let row = [];
+        for(let x = 0; x < mapSize; x++){
+          row.push('   '); // empty room
+        }
+        map.push(row);
+      }
+      map[playerPos.y][playerPos.x] = 'ENT'; // Entrance
+      pathTrail = [{x: playerPos.x, y: playerPos.y}];
+      renderMap();
+    }
+
+    function renderMap() {
+      let display = '';
+      for(let y = 0; y < mapSize; y++){
+        for(let x = 0; x < mapSize; x++){
+          let cell = map[y][x];
+          if(playerPos.x === x && playerPos.y === y){
+            display += '[X]';
+          } else if(cell !== '   ') {
+            display += `[${cell}]`;
+          } else {
+            display += '[   ]';
+          }
+        }
+        display += '\n';
+      }
+      mapEl.textContent = display;
+    }
+
+    function setChoices(options){
+      choicesEl.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt.text;
+        btn.onclick = opt.action;
+        choicesEl.appendChild(btn);
+      });
+    }
+
+    function movePlayer(newX, newY, roomLabel){
+      playerPos.x = newX;
+      playerPos.y = newY;
+      map[newY][newX] = roomLabel;
+      pathTrail.push({x:newX, y:newY});
+      renderMap();
+    }
+
+    function startGame(){
+      playerPos = {x:2, y:2};
+      initMap();
+      storyEl.textContent = "You are a brave adventurer entering a dark dungeon...";
+      setChoices([
+        { text: 'Left', action: () => goLeft() },
+        { text: 'Right', action: () => goRight() },
+        { text: 'Forward', action: () => goForward() }
+      ]);
+    }
+
+    // Path options
+    function goLeft(){
+      storyEl.textContent = "You enter a room full of glowing mushrooms. What do you do?";
+      movePlayer(1,2,'MSH');
+      setChoices([
+        { text: 'Eat them', action: mushroomEat },
+        { text: 'Move on', action: mushroomMove }
+      ]);
+    }
+
+    function goRight(){
+      storyEl.textContent = "You find a sleeping dragon. What do you do?";
+      movePlayer(3,2,'DRG');
+      setChoices([
+        { text: 'Sneak past', action: sneakPastDragon },
+        { text: 'Fight', action: fightDragon }
+      ]);
+    }
+
+    function goForward(){
+      storyEl.textContent = "You enter a dark corridor and hear whispers. What do you do?";
+      movePlayer(2,1,'WHI');
+      setChoices([
+        { text: 'Investigate', action: investigateWhispers },
+        { text: 'Run back', action: runBack }
+      ]);
+    }
+
+    // Outcomes
+    function mushroomEat(){
+      storyEl.textContent = "The mushrooms were poisonous! You collapse. Game Over.";
+      movePlayer(playerPos.x, playerPos.y,'DED');
+      restartGame();
+    }
+
+    function mushroomMove(){
+      storyEl.textContent = "You wisely move on and find a hidden treasure chest. You Win!";
+      movePlayer(0,2,'TRS');
+      restartGame();
+    }
+
+    function sneakPastDragon(){
+      storyEl.textContent = "You quietly sneak past the dragon and escape the dungeon. You Win!";
+      movePlayer(4,2,'ESC');
+      restartGame();
+    }
+
+    function fightDragon(){
+      storyEl.textContent = "The dragon wakes up and incinerates you. Game Over.";
+      movePlayer(playerPos.x, playerPos.y,'DED');
+      restartGame();
+    }
+
+    function investigateWhispers(){
+      storyEl.textContent = "The whispers were spirits! They trap you forever. Game Over.";
+      movePlayer(playerPos.x, playerPos.y,'DED');
+      restartGame();
+    }
+
+    function runBack(){
+      storyEl.textContent = "You run back to the entrance and survive. You Win!";
+      movePlayer(2,2,'ENT');
+      restartGame();
+    }
+
+    function restartGame(){
+      setChoices([
+        { text: 'Restart', action: startGame }
+      ]);
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
